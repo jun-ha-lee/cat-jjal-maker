@@ -45,6 +45,15 @@
         return JSON.parse(localStorage.getItem(key));
       },
     };
+
+    const fetchCat = async (text) => {
+      const OPEN_API_DOMAIN = "https://cataas.com";
+      const response = await fetch(`${OPEN_API_DOMAIN}/cat/says/${text}?json=true`);
+      const responseJson = await response.json();
+      return `${OPEN_API_DOMAIN}/${responseJson.url}`;
+    };
+
+
     console.log("야옹");
 
     // const catItem = (
@@ -164,7 +173,8 @@
           setErrorMsg('빈값으로는 생성할 수 없습니다.');
           return; // 빈값에러가 있으면 이 함수는 종료 밑에 updateMainCat()실행되지 않고
         }
-        updateMainCat(); // 모두 통과되면 그때 updateMainCat()실행
+        updateMainCat(inputValue); // 모두 통과되면 그때 updateMainCat()실행, updateMainCat함수에 inputValue를 인자로 넘겨줌
+        // 왜 넘겨주냐면 고양이 그림에 사용자가 입력한 영어가 나와야 하기 때문
       }
 
       return (
@@ -219,13 +229,16 @@
       const [mainCatImage, setMainCatImage] = React.useState(CAT1); // CAT1 이 초기값
 
 
-      // 생성버튼을 눌렀을때 불리는 handleFormSubmit 함수
-      function updateMainCat() {
+      // 생성버튼을 눌렀을때 불리는 함수
+      async function updateMainCat(inputValue) { // await로 받아오려면 상위함수가 async, inputValue는 사용자가 입력한 데이터
+        // 생성버튼을 누를때 api받아오는
+        const newCat = await fetchCat(inputValue); // 데이터를 받아오기 위해 await문법, await로 받아오려면 상위함수가 async
+
         const nextCounter = counter + 1;
         setCounter(nextCounter);
 
         // 생성버튼을 누르면 -> 고양이사진을 바꿔라 이므로 여기안에
-        setMainCatImage(CAT2); // CAT2사진으로 바뀜
+        setMainCatImage(newCat); // newCat 사진으로 바뀜
         jsonLocalStorage.setItem('카운터', nextCounter); // 브라우저에 counter저장
       }
 
