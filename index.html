@@ -94,6 +94,13 @@
     // 컴포넌트 만들기
     function Favorites({ favoritesCard }) { // App에 있는 favoritesCard를 받아온다
 
+      // 즐겨찾기에 사진이 없을때
+      if (favoritesCard.length === 0) {
+        return (
+          <div>사진 위 하트를 눌러 고양이 사진을 저장해봐요!</div>
+        );
+      }
+
       return (
         <ul className="favorites">{/*리액트에서는 class대신 className으로 사용 */}
           {/* map() 배열 내의 모든 요소 각각에 대하여 주어진 함수를 호출한 결과를 모아 새로운 배열을 반환합니다. */}
@@ -150,6 +157,7 @@
       // inputValue에 사용자가 입력한 값을 받고 <input>의 value값을 {inputValue}로 받아온다
       // setInputValue안에서 변환작업 후 반환
 
+      // 대문자로 변경
       function handleInputChange(e) {
         const userInputValue = e.target.value;
         // console.log(userInputValue.toUpperCase()); // input에 입력한 값을 받아오는데 대문자로
@@ -200,12 +208,14 @@
     // );
 
     // 컴포넌트 만들기
-    const MainCard = ({ img, onHeartClick }) => { // 괄호안에 props가 아닌 {img}로 하면 아래에 props.~~~가 아니라 {img}로 가능
+    const MainCard = ({ img, onHeartClick, alreadyFavorite }) => { // 괄호안에 props가 아닌 {img}로 하면 아래에 props.~~~가 아니라 {img}로 가능
+      const heartIcon = alreadyFavorite ? "💖" : "🤍"; // 이미 favoritesCard에 있다면 빨간하트를 아니라면 하얀하트
+
       return (
         <div className="main-card">{/*리액트에서는 class대신 className으로 사용 */}
           <img src={img} alt='고양이' width='400' />
           <button
-            onClick={onHeartClick}>🤍</button>{/* 위에 handleHeartClick을 받아와서 바로 사용가능 */}
+            onClick={onHeartClick}>{heartIcon}</button>{/* 위에 handleHeartClick을 받아와서 바로 사용가능 */}
           {/*버튼에 onClick했을때 handleHeartClick함수를 불러라 */}
           {/* 버튼에 onMouseOver했을 때 */}
         </div>
@@ -215,7 +225,15 @@
     // 컴포넌트 만들기
     const App = () => {
       // <Title>안에서 useState를 사용하기 위해(counter)
-      const [counter, setCounter] = React.useState(jsonLocalStorage.getItem('카운터'));
+      // const [counter, setCounter] = React.useState(jsonLocalStorage.getItem('카운터'));
+      // 카운터가 바뀔때 마다 로컬스토리지에 접근하기때문에
+      // 처음 한번만 접근하게 하려면 함수를 넘기면 된다
+      const [counter, setCounter] = React.useState(() => {
+        return jsonLocalStorage.getItem('카운터'); // 초기값
+      });
+
+      // counter가 없으면 공백 있으면 counter번째
+      const counterCheck = counter === null ? '' : `${counter} 번째 `;
       // 괄호안은 초기값, 문자열로 써도 됨, 리액트의 useState를 사용한다
       // localStorage에 저장된 키값인 '카운터'의 값을 가져온다, 로컬스토리지의 value값은 string값으로 저장
       // counter는 첫번째 인자, setCounter는 두번째 인자
@@ -250,17 +268,27 @@
         // 생성버튼을 누를때 api받아오는
         const newCat = await fetchCat(inputValue); // 데이터를 받아오기 위해 await문법, await로 받아오려면 상위함수가 async
 
-        const nextCounter = counter + 1;
-        setCounter(nextCounter);
+        // const nextCounter = counter + 1;
+        // setCounter(nextCounter);
+
+        // 노마드코더 참고
+        setCounter((prev) => {
+          const nextCounter = prev + 1;
+          jsonLocalStorage.setItem('카운터', nextCounter); // 브라우저에 counter저장
+          return nextCounter;
+        });
 
         // 생성버튼을 누르면 -> 고양이사진을 바꿔라 이므로 여기안에
         setMainCatImage(newCat); // newCat 사진으로 바뀜
-        jsonLocalStorage.setItem('카운터', nextCounter); // 브라우저에 counter저장
+
       }
 
       // 메인카드에 하트를 눌렀을때 Favorites에 추가되는
       // favoritesCard는 첫번째 인자를, setFavoritesCard는 두번째 인자로 함수임
-      const [favoritesCard, setFavoritesCard] = React.useState(jsonLocalStorage.getItem('즐겨찾는사진') || []);
+      // const [favoritesCard, setFavoritesCard] = React.useState(jsonLocalStorage.getItem('즐겨찾는사진') || []);
+      const [favoritesCard, setFavoritesCard] = React.useState(() => {
+        return jsonLocalStorage.getItem('즐겨찾는사진') || [];
+      });
       // 앞에 로컬스토리지에 '즐겨찾는사진'이 빈값이면 뒤에 빈배열[]을 사용해라
 
       // 메인카드에 하트 눌렀을때 불리는 handleHeartClick 함수
@@ -271,12 +299,18 @@
 
       }
 
+      // 메인이미지의 하트를 이미 클릭하였을때
+      // 메인이미지의 하트에서 사용한다
+      const alreadyFavorite = favoritesCard.includes(mainCatImage); // favoritesCard이 mainCatImage를 포함하고 있나?,javascript문법
+      // 포함하고있다면 true로 반환
+
       return (
         <div>{/* <div>로 감싸는 이유는 감싸지 않으면 에러가 남, 최상위 태그가 하나만 남도록 div로 감싼다 */}
-          <Title>{counter}번째 고양이 가라사대</Title>{/* JSX에서 변수를 사용할때는 중괄호쓰고 변수명 */}
+          <Title>{counterCheck}고양이 가라사대</Title>{/* JSX에서 변수를 사용할때는 중괄호쓰고 변수명 */}
           <Title>2번째 고양이 가라사대</Title>
           <Form updateMainCat={updateMainCat} />{/* props에 handleFormSubmit함수 자체를 넘겨버림 */}
-          <MainCard img={mainCatImage} onHeartClick={handleHeartClick} />{/* mainCatImage변수, props에 handleHeartClick함수를 넘겨버림 */}
+          <MainCard img={mainCatImage} onHeartClick={handleHeartClick} alreadyFavorite={alreadyFavorite} />{/* mainCatImage변수, props에 handleHeartClick함수를 넘겨버림 */}
+          {/* alreadyFavorite을 MainCard에 props으로 넘긴다 */}
           <Favorites favoritesCard={favoritesCard} />
         </div>
       );
