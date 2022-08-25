@@ -166,7 +166,7 @@ const Form = ({ updateMainCat }) => { // App에 있는 updateMainCat 받아옴
         value={inputValue}
         onChange={handleInputChange}// input에 값이 변화할때마다 이 함수가 호출된다
       />
-      <button type="submit">생성</button>
+      <button type="submit">생성2</button>
       <p style={{ color: 'red' }}>{errorMsg}</p>
     </form>
   );
